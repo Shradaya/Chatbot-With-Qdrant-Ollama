@@ -12,9 +12,7 @@ from src.langchain_utils.document_handler import get_text_from_document
 def main():
     def get_bot_response(message):
         # List of greeting keywords
-        print(message)
         greetings = ["hello", "hi", "hey", "greetings", "namaste"]
-        print("I Here")
         # Check if the message is a greeting
         if any(greeting in message.lower() for greeting in greetings):
             return "Hello! I'm here to assist you with questions. Please feel free to ask anything."
