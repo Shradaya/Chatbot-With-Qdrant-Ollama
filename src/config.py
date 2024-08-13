@@ -13,6 +13,7 @@ class qdrant_configs:
     PORT = "6333"
     URI = f"http://{HOST}:{PORT}/"
     COLLECTION = "tft"
+    K = 5
     
 CUSTOM_PROMPT = """
 You are an AI assistant specialized in the Critical perspective in accounting.

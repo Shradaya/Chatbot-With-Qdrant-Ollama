@@ -11,7 +11,7 @@ class qdrant_connection:
             port=qdrant_configs.PORT
         )
         self.embedder = embedder
-        self.vector_store = None
+        self.vector_store = self.initialize_vector_store()
         
         self.create_collection()
         
@@ -31,10 +31,10 @@ class qdrant_connection:
             # Collection already exists
             print(f"Collection '{collection_name}' already exists.")
 
-    def initialize_vector_store(self, collection = None):
+    def initialize_vector_store(self):
         self.vector_store = LangChainQdrant(
             client = self.client,
-            collection_name = qdrant_configs.COLLECTION if not collection else collection,
+            collection_name = qdrant_configs.COLLECTION,
             embeddings = self.embedder
         )
 
@@ -50,11 +50,11 @@ class qdrant_connection:
         self.client.upsert(collection_name=qdrant_configs.COLLECTION, points=points)
         
     def search_in_qdrant(self, query, top_k = qdrant_configs.K):
-        query_embedding = self.embeder.embed([query])[0]
+        query_embedding = self.embedder._embed([query])[0]
 
         search_result = self.client.search(
             collection_name = qdrant_configs.COLLECTION,
             query_vector = query_embedding,
-            top_k = top_k
+            limit = top_k
         )
         return search_result

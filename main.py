@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 import argparse
 from src.config import file_paths
 from src.ui import launch_gradio_ui
@@ -6,6 +7,7 @@ from src.llm.ollamaModels import llm, embedder
 from src.langchain_utils.qa_chain import get_qa_chain
 from src.qdrant_utils.query import insert_into_db, get_retriever
 from src.langchain_utils.document_handler import get_text_from_document
+from src.qdrant_utils.connection import qdrant_connection
 
 
 def main():
@@ -33,6 +35,9 @@ def main():
         history.append((message, bot_response))
         return "", history
     
+    conn = qdrant_connection(embedder)
+    conn.create_collection()
+    
     parser = argparse.ArgumentParser(description = 'Arguments')
     parser.add_argument('--load', help = 'Choose whether to load data to qdrant or not', default = False)
     args = parser.parse_args()
@@ -47,14 +52,32 @@ def main():
             file_contents += get_text_from_document(file_path)
             os.replace(file_path, f"{file_paths.archive}{file}")
         if file_contents:
-            insert_into_db(embedder, file_contents)
+            # insert_into_db(embedder, file_contents)
+            conn.insert_data_to_qdrant(file_contents)
     else:
         print("Using existing collection without loading data")
     
-    retriever = get_retriever(embedder)
-    qa_chain = get_qa_chain(llm, retriever)
+    print(f"Start Retriving {datetime.now()}")
+    a = conn.search_in_qdrant("just accounting")
+    print(f"Retriving Completed {datetime.now()}")
+
+    formatted_prompt = """
+You are an AI assistant specialized in the Critical perspective in accounting.
+Do not make up or infer information
+Remember to always base your answers on the {context} provided and address the specific {question} asked.
+Be concise in your responses while ensuring accuracy and completeness.
+""".format(context = "\n".join([x.payload['text'] for x in a]), question = "just accounting")
     
-    launch_gradio_ui(respond)
+    # retriever = get_retriever(embedder)
+    # qa_chain = get_qa_chain(llm, retriever)
+    
+    print(f"Invoke LLM model {datetime.now()}")
+    response = llm.generate([formatted_prompt])
+    print(f"LLM invoke completed {datetime.now()}")
+    
+    print(response)
+    
+    # launch_gradio_ui(respond)
     
 
 if __name__ == "__main__":
