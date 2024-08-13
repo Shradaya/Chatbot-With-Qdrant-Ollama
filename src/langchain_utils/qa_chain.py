@@ -12,12 +12,14 @@ def get_qa_chain(llm,
         template = CUSTOM_PROMPT,
         input_variables = ["context", "question"]
     )
-    return RetrievalQA.from_chain_type(
+    qa_chain = RetrievalQA.from_chain_type(
         llm = llm,
         chain_type = chain_type,
         retriever = retriever,
         return_source_documents = return_source_documents,
         chain_type_kwargs = {
             "prompt": PROMPT
-            }
+        }
     )
+    
+    return qa_chain

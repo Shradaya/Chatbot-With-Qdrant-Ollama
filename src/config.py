@@ -12,7 +12,7 @@ class qdrant_configs:
     HOST = "localhost"
     PORT = "6333"
     URI = f"http://{HOST}:{PORT}/"
-    COLLECTION = "qd_colls"
+    COLLECTION = "tft"
     
 CUSTOM_PROMPT = """
 You are an AI assistant specialized in the Critical perspective in accounting.
