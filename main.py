@@ -44,7 +44,7 @@ def main():
         
         for file in files_list:
             file_path = f"{file_paths.new}{file}"
-            file_contents_dict_lst += get_text_from_document(file_path, chunk_size = 500, chunk_overlap = 50)
+            file_contents_dict_lst += get_text_from_document(file_path, chunk_size = 2000, chunk_overlap = 0)
             # os.replace(file_path, f"{file_paths.archive}{file}")
         if file_contents_dict_lst:
             insert_into_db(embedder, file_contents_dict_lst)

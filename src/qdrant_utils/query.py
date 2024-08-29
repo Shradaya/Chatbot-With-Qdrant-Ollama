@@ -24,5 +24,6 @@ def get_retriever(embedder, search_type = "mmr", search_item_count = 5):
         embedding = embedder,
         collection_name = qdrant_configs.COLLECTION,
         url = qdrant_configs.URI,
+        metadata_payload_key='title'
     )
     return qdrant.as_retriever(search_type = search_type, search_kwargs={"k": search_item_count})
