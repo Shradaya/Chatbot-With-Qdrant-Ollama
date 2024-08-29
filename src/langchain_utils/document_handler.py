@@ -1,3 +1,4 @@
+import re
 import fitz 
 
 def extract_text_from_pdf(pdf_file):
@@ -14,12 +15,36 @@ def extract_text_from_text_file(text_file):
         text = file.read()
     return text
 
+def clean_text(text):
+    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r'[^\w\s,.]', '', text)
+    return text.strip()
+
 def chunk_text(text, chunk_size, overlap):
-    chunks = []
-    for i in range(0, len(text), chunk_size - overlap):
-        chunk = text[i:i + chunk_size]
-        chunks.append(chunk)
-    return chunks
+    # # Identify the Part to be used as Metadata
+    pattern = r'Part-\d+ \n[^\n]+ \n'
+    matches = re.finditer(pattern, text)    
+    indexes_in_part = []
+    parts = []
+    
+    for match in matches:
+        start_index = match.start()
+        end_index = match.end()
+        indexes_in_part.append((start_index, end_index))
+        
+    # # CREATE_CHUNKS
+    number_of_parts = len(indexes_in_part)
+    for i in range(number_of_parts):
+        title = clean_text(text[indexes_in_part[i][0]:indexes_in_part[i][1]])
+
+        for i in range(indexes_in_part[i][1], indexes_in_part[i+1][0] if number_of_parts -1 != i else len(text), chunk_size - overlap):
+            chunk = clean_text(text[i:i + chunk_size])
+            parts.append({
+                "title": title,
+                "chunk": chunk
+            })
+        
+    return parts
 
 
 def get_text_from_document(file_path, chunk_size = 1000, chunk_overlap = 100):
@@ -27,6 +52,6 @@ def get_text_from_document(file_path, chunk_size = 1000, chunk_overlap = 100):
         text = extract_text_from_pdf(file_path)
     else:
         text = extract_text_from_text_file(file_path)
+    
     chunks = chunk_text(text, chunk_size, chunk_overlap)
     return chunks
-    
