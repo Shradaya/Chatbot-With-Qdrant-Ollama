@@ -1,3 +1,4 @@
+from tqdm import tqdm
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import PointStruct
 from ..config import qdrant_configs, ollama_configs
@@ -39,15 +40,21 @@ class qdrant_connection:
         )
 
     
-    def insert_data_to_qdrant(self, data_items: list[str]):
-        points = []
-        embeddings = self.embedder._embed(data_items)
-        for i, (data, embedding) in enumerate(zip(data_items, embeddings)):
-            if not all(isinstance(value, float) for value in embedding):
-                raise ValueError(f"Invalid embedding: {embedding}")
-            points.append(PointStruct(id=i, vector=embedding, payload={'text': data}))
+    def insert_data_to_qdrant(self, data_items: list[dict]):
+        data_items = tqdm(data_items, desc = "Loading Embedding")
+        for data_item in data_items:
+            points = []
+            title = data_item.get('title')
+            data_list = data_item['chunks']
+            
+            embeddings = self.embedder._embed(data_list)
+            
+            for i, (data, embedding) in enumerate(zip(data_list, embeddings)):
+                if not all(isinstance(value, float) for value in embedding):
+                    raise ValueError(f"Invalid embedding: {embedding}")
+                points.append(PointStruct(id=i, vector=embedding, payload={'text': data, "metadata": title}))
         
-        self.client.upsert(collection_name=qdrant_configs.COLLECTION, points=points)
+            self.client.upsert(collection_name=qdrant_configs.COLLECTION, points=points)
         
     def search_in_qdrant(self, query, top_k = qdrant_configs.K):
         query_embedding = self.embedder._embed([query])[0]
