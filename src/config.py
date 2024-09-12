@@ -1,5 +1,5 @@
 class app:
-    title = "Test Application"
+    title = "Nepal's Constitution"
 
 class ollama_configs:
     
@@ -9,14 +9,14 @@ class ollama_configs:
     # answer_key = "text"
     
     # # # PHI 3, 3.8B
-    # model_name = "phi3:3.8B" # 3.8 B
-    # vector_size = "3072"
-    # answer_key = "key"
+    model_name = "phi3:3.8B" # 3.8 B
+    vector_size = "3072"
+    answer_key = "text"
     
     # # # llama 3.1, 8B
-    model_name = "llama3.1"
-    vector_size = "4096"
-    answer_key = "text"
+    # model_name = "llama3.1"
+    # vector_size = "4096"
+    # answer_key = "text"
     
 class file_paths:
     new = "./pdfs/"
@@ -44,5 +44,5 @@ When answering quqestions based on this document, please follow these guidelines
 - Maintain a neutral and informative tone, avoiding any personal opinions or interpretations.
 The goal is to provide clear and informative answers that help the user understand the specific aspects of the constitution of nepal 2072.
 
-Remember to always base your answers on the {context} provided and address the specific {question} asked.
+Remember to always base your answers on the {context} provided and address the specific {question} asked. Keep your answers short.
 """

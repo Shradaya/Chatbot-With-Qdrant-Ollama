@@ -10,8 +10,11 @@ from src.qdrant_utils.connection import qdrant_connection
 from src.langchain_utils.document_handler import get_text_from_document
 from src.qdrant_utils.connection import qdrant_connection
 
-def get_total_difference_seconds(start: datetime, end: datetime):
+def get_total_difference_seconds(start: datetime, end: datetime) -> int:
     return (end - start).total_seconds()
+
+def multi_replace(value: str) -> str:
+    return value.replace("\n", ":").replace(",", ";")
 
 def main():
     conn = qdrant_connection(embedder)
@@ -30,7 +33,7 @@ def main():
         for file in files_list:
             file_path = f"{file_paths.new}{file}"
             file_contents += get_text_from_document(file_path, chunk_size = 2048, chunk_overlap = 128)
-            # os.replace(file_path, f"{file_paths.archive}{file}")
+            os.replace(file_path, f"{file_paths.archive}{file}")
         if file_contents:
             conn.insert_data_to_qdrant(file_contents)
     else:
@@ -47,24 +50,23 @@ def main():
         retrieve_start = datetime.now()
         context = conn.search_in_qdrant(question)
         retrieve_complete = datetime.now()
-        
         prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context]), question = question)
 
         # # INVOKE MODEL
         invoke_start = datetime.now()
         generated_answer = llm.invoke(prompt)
         invoke_complete = datetime.now()
-        
+
         # WRITE TO FILE
         with open(output_file, 'a') as file:
             database_retrieval_delta = get_total_difference_seconds(retrieve_start, retrieve_complete)
             invoke_model_delta = get_total_difference_seconds(invoke_start, invoke_complete)
-            generated_answer.replace("\n", " ").replace(",", ";")
-            question.replace("\n", " ").replace(",", ";")
-            answer.replace("\n", " ").replace(",", ";")
+            generated_answer = generated_answer.replace("\n", ":").replace(",", ";")
+            question = question.replace("\n", ":").replace(",", ";")
+            answer = answer.replace("\n", ":").replace(",", ";")
             
-            file.write(f"{question}, {database_retrieval_delta}, {invoke_model_delta}, {answer}, {generated_answer}\n")
-    
+            file.write(f"{multi_replace(question)}, {database_retrieval_delta}, {invoke_model_delta}, {multi_replace(answer)}, {multi_replace(generated_answer)}\n")
+
 
 if __name__ == "__main__":
     main()
