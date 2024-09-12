@@ -2,6 +2,7 @@ class app:
     title = "Test Application"
 
 class ollama_configs:
+    
     # # Gemma2, 2B
     # model_name = "gemma2:2b"
     # vector_size = "2304"
@@ -16,9 +17,12 @@ class ollama_configs:
     model_name = "llama3.1"
     vector_size = "4096"
     answer_key = "text"
+    
 class file_paths:
     new = "./pdfs/"
     archive = "./archived_pdfs/"
+    output_file_path = "./answers_collection/"
+    output_file_name = f"{ollama_configs.model_name.replace('.', '-').replace(':', '-')}.csv"
 
 class qdrant_configs:
     HOST = "localhost"

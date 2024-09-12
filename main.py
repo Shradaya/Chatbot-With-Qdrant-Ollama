@@ -1,6 +1,7 @@
 import os
-from datetime import datetime
 import argparse
+from tqdm import tqdm
+from datetime import datetime
 from src.config import file_paths
 from src.questions import QUESTIONS
 from src.llm.ollamaModels import llm, embedder
@@ -9,24 +10,10 @@ from src.qdrant_utils.connection import qdrant_connection
 from src.langchain_utils.document_handler import get_text_from_document
 from src.qdrant_utils.connection import qdrant_connection
 
+def get_total_difference_seconds(start: datetime, end: datetime):
+    return (end - start).total_seconds()
 
 def main():
-    def get_bot_response(message, history):
-        try:
-            print(message)
-            result = qa_chain.invoke({"query": message})
-            answer = result['result']
-            return answer
-        except Exception as e:
-            print(f"Error in get_bot_response: {str(e)}")
-            return "I'm sorry, I encountered an error while processing your question."
-
-    
-    def respond(message, history = []):
-        bot_response = get_bot_response(message, history)
-        history.append((message, bot_response))
-        return "", history
-    
     conn = qdrant_connection(embedder)
     conn.create_collection()
     
@@ -48,21 +35,35 @@ def main():
             conn.insert_data_to_qdrant(file_contents)
     else:
         print("Using existing collection without loading data")
-    
-    easy_questions = QUESTIONS['Easy']
-    for i in easy_questions:
+
+    output_file = f"{file_paths.output_file_path}{file_paths.output_file_name}"
+    with open(output_file, 'w') as file:
+        file.write("Question, Database Retrieval Delta, Invoke Model Delta, Answer, Generated Answer\n")
+    for i in tqdm(QUESTIONS):
         question = i["question"]
-        
+        answer = i["answer"]
+
         # # SEARCH IN DATABASE
-        print(f"Start Retriving {datetime.now()}")
+        retrieve_start = datetime.now()
         context = conn.search_in_qdrant(question)
-        print(f"Retriving Completed {datetime.now()}")
+        retrieve_complete = datetime.now()
+        
         prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context]), question = question)
 
-        print(f"Start Invoking {datetime.now()}")
-        print(llm.invoke(prompt))
-        print(f"Completed {datetime.now()}")
-        break
+        # # INVOKE MODEL
+        invoke_start = datetime.now()
+        generated_answer = llm.invoke(prompt)
+        invoke_complete = datetime.now()
+        
+        # WRITE TO FILE
+        with open(output_file, 'a') as file:
+            database_retrieval_delta = get_total_difference_seconds(retrieve_start, retrieve_complete)
+            invoke_model_delta = get_total_difference_seconds(invoke_start, invoke_complete)
+            generated_answer.replace("\n", " ").replace(",", ";")
+            question.replace("\n", " ").replace(",", ";")
+            answer.replace("\n", " ").replace(",", ";")
+            
+            file.write(f"{question}, {database_retrieval_delta}, {invoke_model_delta}, {answer}, {generated_answer}\n")
     
 
 if __name__ == "__main__":

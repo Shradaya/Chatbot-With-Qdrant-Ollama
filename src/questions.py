@@ -1,5 +1,5 @@
-QUESTIONS = {
-  "Easy": [
+QUESTIONS = [
+    #EASY
     {"question": "What year was the Constitution of Nepal adopted?", 
     "answer": "2015"},
     {"question": "What is the highest law in Nepal?", 
@@ -19,9 +19,8 @@ QUESTIONS = {
     {"question": "What fundamental rights are guaranteed by the Constitution of Nepal?", 
     "answer": "Fundamental rights include the right to equality, freedom of speech, freedom of assembly, right to education, and right to protection against discrimination, among others."},
     {"question": "What does the Constitution of Nepal say about the official religion of the country?", 
-    "answer": "The Constitution declares Nepal as a secular state, meaning it does not endorse any official religion."}
-  ],
-  "Medium": [
+    "answer": "The Constitution declares Nepal as a secular state, meaning it does not endorse any official religion."},
+    # "Medium
     {"question": "What is the term length for the President of Nepal according to the Constitution?", 
     "answer": "The President of Nepal is elected for a term of five years."},
     {"question": "Which body in Nepal is responsible for interpreting the Constitution?", 
@@ -41,9 +40,8 @@ QUESTIONS = {
     {"question": "What mechanism does the Constitution of Nepal provide for the dissolution of the House of Representatives?", 
     "answer": "The President has the authority to dissolve the House of Representatives on the recommendation of the Prime Minister."},
     {"question": "How does the Constitution of Nepal address gender equality?", 
-    "answer": "The Constitution guarantees gender equality and prohibits discrimination based on gender, ensuring equal rights and opportunities for women."}
-  ],
-  "Hard": [
+    "answer": "The Constitution guarantees gender equality and prohibits discrimination based on gender, ensuring equal rights and opportunities for women."},
+    # Hard
     {"question": "What are the primary functions of the Executive branch under the Constitution of Nepal?", 
     "answer": "The Executive branch is responsible for implementing laws, managing government affairs, and overseeing various ministries and departments. It is headed by the Prime Minister, who is appointed by the President."},
     {"question": "Can you explain the role of the Federal Parliament in Nepal's Constitution?", 
@@ -65,4 +63,3 @@ QUESTIONS = {
     {"question": "What are the key features of the electoral system as defined by the Constitution of Nepal?", 
     "answer": "The electoral system in Nepal involves a mixed system of first-past-the-post and proportional representation. The Constitution provides for elections to the House of Representatives, the National Assembly, and provincial assemblies, ensuring democratic representation at both national and local levels."}
   ]
-}
