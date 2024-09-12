@@ -2,12 +2,20 @@ class app:
     title = "Test Application"
 
 class ollama_configs:
-    # model_name = "llama3"
-    # model_name = "qwen2:0.5b"
-    # model_name = "qwen:0.5b"
-    # model_name = "starcoder:1b"
-    model_name = "llama3.1"
+    # # Gemma2, 2B
+    # model_name = "gemma2:2b"
+    # vector_size = "2304"
+    # answer_key = "text"
     
+    # # # PHI 3, 3.8B
+    # model_name = "phi3:3.8B" # 3.8 B
+    # vector_size = "3072"
+    # answer_key = "key"
+    
+    # # # llama 3.1, 8B
+    model_name = "llama3.1"
+    vector_size = "4096"
+    answer_key = "text"
 class file_paths:
     new = "./pdfs/"
     archive = "./archived_pdfs/"
@@ -16,9 +24,9 @@ class qdrant_configs:
     HOST = "localhost"
     PORT = "6333"
     URI = f"http://{HOST}:{PORT}/"
-    COLLECTION = "tft"
-    K = 5
-    VECTOR_SIZE = "4096"
+    COLLECTION = f"constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}"
+    K = 2
+    VECTOR_SIZE = ollama_configs.vector_size
     DISTANCE = "Cosine"
     
 CUSTOM_PROMPT = """

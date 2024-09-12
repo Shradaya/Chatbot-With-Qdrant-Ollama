@@ -2,26 +2,16 @@ import os
 from datetime import datetime
 import argparse
 from src.config import file_paths
-from src.ui import launch_gradio_ui
+from src.questions import QUESTIONS
 from src.llm.ollamaModels import llm, embedder
-from src.langchain_utils.qa_chain import get_qa_chain
+from src.config import CUSTOM_PROMPT, ollama_configs
 from src.qdrant_utils.connection import qdrant_connection
-from src.qdrant_utils.query import insert_into_db, get_retriever
 from src.langchain_utils.document_handler import get_text_from_document
 from src.qdrant_utils.connection import qdrant_connection
 
 
 def main():
     def get_bot_response(message, history):
-        # Handle greetings separately
-        # greetings = ["hello", "hi", "hey", "greetings", "namaste"]
-        # if any(greeting in message.lower() for greeting in greetings):
-        #     return "Hello! I'm here to assist you with questions. Please feel free to ask anything."
-        
-        # Build the context from the history
-        # context = "\n".join(f"User: {msg}\nBot: {resp}" for msg, resp in history)
-        # context += f"\nUser: {message}\nBot:"
-
         try:
             print(message)
             result = qa_chain.invoke({"query": message})
@@ -59,27 +49,20 @@ def main():
     else:
         print("Using existing collection without loading data")
     
-#     print(f"Start Retriving {datetime.now()}")
-#     a = conn.search_in_qdrant("just accounting")
-#     print(f"Retriving Completed {datetime.now()}")
+    easy_questions = QUESTIONS['Easy']
+    for i in easy_questions:
+        question = i["question"]
+        
+        # # SEARCH IN DATABASE
+        print(f"Start Retriving {datetime.now()}")
+        context = conn.search_in_qdrant(question)
+        print(f"Retriving Completed {datetime.now()}")
+        prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context]), question = question)
 
-#     formatted_prompt = """
-# You are an AI assistant specialized in the Critical perspective in accounting.
-# Do not make up or infer information
-# Remember to always base your answers on the {context} provided and address the specific {question} asked.
-# Be concise in your responses while ensuring accuracy and completeness.
-# """.format(context = "\n".join([x.payload['text'] for x in a]), question = "just accounting")
-    
-    retriever = get_retriever(embedder)
-    qa_chain = get_qa_chain(llm, retriever)
-    
-    # print(f"Invoke LLM model {datetime.now()}")
-    # response = llm.generate([formatted_prompt])
-    # print(f"LLM invoke completed {datetime.now()}")
-    
-    # print(response)
-    
-    launch_gradio_ui(respond)
+        print(f"Start Invoking {datetime.now()}")
+        print(llm.invoke(prompt))
+        print(f"Completed {datetime.now()}")
+        break
     
 
 if __name__ == "__main__":
