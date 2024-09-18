@@ -49,4 +49,4 @@ class reranker_configs:
 
 # Remember to always base your answers on the {context} provided and address the specific {question} asked. Keep your answers short.
 # """
-CUSTOM_PROMPT = "Using this data: {context}. Respond to this prompt: {question}"
+CUSTOM_PROMPT = "Using this data: {context}. Respond to this prompt: {question}. Do not make up answers"
