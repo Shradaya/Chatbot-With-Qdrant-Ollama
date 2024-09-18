@@ -9,7 +9,6 @@ from src.llm.ollamaModels import llm, embedder, reranker
 from src.config import CUSTOM_PROMPT, ollama_configs
 from src.qdrant_utils.connection import qdrant_connection
 from src.langchain_utils.document_handler import get_text_from_document
-from src.qdrant_utils.connection import qdrant_connection
 
 def get_total_difference_seconds(start: datetime, end: datetime) -> int:
     return (end - start).total_seconds()

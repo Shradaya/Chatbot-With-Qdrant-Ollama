@@ -3,7 +3,7 @@ from tqdm import tqdm
 from ..config import qdrant_configs
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import PointStruct
-from langchain_qdrant import Qdrant as LangChainQdrant
+# from langchain_qdrant import Qdrant as LangChainQdrant
 from sklearn.metrics.pairwise import cosine_similarity
 
 class qdrant_connection:
@@ -14,7 +14,7 @@ class qdrant_connection:
         )
         self.embedder = embedder
         self.reranker = reranker
-        self.vector_store = self.initialize_vector_store()
+        # self.vector_store = self.initialize_vector_store()
         
         self.create_collection()
         
@@ -34,12 +34,12 @@ class qdrant_connection:
             # Collection already exists
             print(f"Collection '{collection_name}' already exists.")
 
-    def initialize_vector_store(self):
-        self.vector_store = LangChainQdrant(
-            client = self.client,
-            collection_name = qdrant_configs.COLLECTION,
-            embeddings = self.embedder
-        )
+    # def initialize_vector_store(self):
+    #     self.vector_store = LangChainQdrant(
+    #         client = self.client,
+    #         collection_name = qdrant_configs.COLLECTION,
+    #         embeddings = self.embedder
+    #     )
 
     
     def insert_data_to_qdrant(self, data_items: list[dict]):
