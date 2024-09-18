@@ -1,17 +1,19 @@
+import numpy as np
 from tqdm import tqdm
+from ..config import qdrant_configs
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import PointStruct
-from ..config import qdrant_configs, ollama_configs
-from langchain_community.embeddings import OllamaEmbeddings
 from langchain_qdrant import Qdrant as LangChainQdrant
+from sklearn.metrics.pairwise import cosine_similarity
 
 class qdrant_connection:
-    def __init__(self, embedder):
+    def __init__(self, embedder, reranker = None):
         self.client = QdrantClient(
             host=qdrant_configs.HOST,
             port=qdrant_configs.PORT
         )
         self.embedder = embedder
+        self.reranker = reranker
         self.vector_store = self.initialize_vector_store()
         
         self.create_collection()
@@ -52,16 +54,37 @@ class qdrant_connection:
             for i, (data, embedding) in enumerate(zip(data_list, embeddings)):
                 if not all(isinstance(value, float) for value in embedding):
                     raise ValueError(f"Invalid embedding: {embedding}")
-                points.append(PointStruct(id=i, vector=embedding, payload={'text': data, "metadata": title}))
+                points.append(PointStruct(id=i, 
+                                          vector=embedding, 
+                                          payload = {
+                                              'text': data, 
+                                              "metadata": title,
+                                              "vectors": embedding
+                                            }))
         
             self.client.upsert(collection_name=qdrant_configs.COLLECTION, points=points)
+    
+    def rerank_documents(self, question, retrieved_docs, top_n=5):
+        if not self.reranker:
+            return retrieved_docs
+
+        question_embedding = self.reranker._embed([question])[0]
+        doc_embeddings = [doc.vector for doc in retrieved_docs]
+        similarities = cosine_similarity([question_embedding], doc_embeddings)[0]
         
+        ranked_indices = np.argsort(similarities)[::-1]
+        ranked_docs = [retrieved_docs[i] for i in ranked_indices[:top_n]]
+        return ranked_docs
+    
     def search_in_qdrant(self, query, top_k = qdrant_configs.K):
         query_embedding = self.embedder._embed([query])[0]
-
+        
         search_result = self.client.search(
             collection_name = qdrant_configs.COLLECTION,
             query_vector = query_embedding,
-            limit = top_k
+            limit = top_k,
+            with_payload = True,
+            with_vectors = True
         )
+
         return search_result

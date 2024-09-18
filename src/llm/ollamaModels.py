@@ -8,3 +8,10 @@ llm = Ollama(
 embedder = OllamaEmbeddings(
     model = ollama_configs.model_name,
 )
+
+if ollama_configs.re_ranker:
+    reranker = OllamaEmbeddings(
+        model = ollama_configs.re_ranker
+    )
+else:
+    reranker = None

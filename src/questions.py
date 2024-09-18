@@ -1,7 +1,7 @@
 QUESTIONS = [
     #EASY
     {"question": "What year was the Constitution of Nepal adopted?", 
-    "answer": "2015"},
+    "answer": "2072"},
     {"question": "What is the highest law in Nepal?", 
     "answer": "The Constitution of Nepal"},
     {"question": "Which body has the authority to amend the Constitution of Nepal?", 

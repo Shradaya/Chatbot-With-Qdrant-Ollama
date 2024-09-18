@@ -4,7 +4,7 @@ from tqdm import tqdm
 from datetime import datetime
 from src.config import file_paths
 from src.questions import QUESTIONS
-from src.llm.ollamaModels import llm, embedder
+from src.llm.ollamaModels import llm, embedder, reranker
 from src.config import CUSTOM_PROMPT, ollama_configs
 from src.qdrant_utils.connection import qdrant_connection
 from src.langchain_utils.document_handler import get_text_from_document
@@ -14,10 +14,10 @@ def get_total_difference_seconds(start: datetime, end: datetime) -> int:
     return (end - start).total_seconds()
 
 def multi_replace(value: str) -> str:
-    return value.replace("\n", ":").replace(",", ";")
+    return value.replace("\n", ":").replace(",", ";").replace('\u2705', "")
 
 def main():
-    conn = qdrant_connection(embedder)
+    conn = qdrant_connection(embedder, reranker)
     conn.create_collection()
     
     parser = argparse.ArgumentParser(description = 'Arguments')
@@ -45,10 +45,10 @@ def main():
     for i in tqdm(QUESTIONS):
         question = i["question"]
         answer = i["answer"]
-
         # # SEARCH IN DATABASE
         retrieve_start = datetime.now()
-        context = conn.search_in_qdrant(question)
+        retrieved_documents = conn.search_in_qdrant(question)
+        context = conn.rerank_documents(question, retrieved_documents)
         retrieve_complete = datetime.now()
         prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context]), question = question)
 
