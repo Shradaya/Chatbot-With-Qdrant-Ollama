@@ -5,6 +5,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.models import PointStruct
 # from langchain_qdrant import Qdrant as LangChainQdrant
 from sklearn.metrics.pairwise import cosine_similarity
+from qdrant_client.http import models
 
 class qdrant_connection:
     def __init__(self, embedder, reranker = None):
@@ -78,13 +79,29 @@ class qdrant_connection:
     
     def search_in_qdrant(self, query, top_k = qdrant_configs.K):
         query_embedding = self.embedder._embed([query])[0]
-        
+        # filter_condition = models.Filter(
+        #     must=[
+        #         models.FieldCondition(
+        #             key='your_metadata_key',
+        #             match=models.Match(value='desired_value')
+        #         )
+        #     ]
+        # )
+        # search_result = self.client.query_points(
+        #     collection_name=qdrant_configs.COLLECTION,
+        #     query = query_embedding,
+        #     limit = top_k,
+        #     with_payload = True,
+        #     with_vectors = True
+        # )
         search_result = self.client.search(
             collection_name = qdrant_configs.COLLECTION,
             query_vector = query_embedding,
+            # filter = filter_condition,
             limit = top_k,
             with_payload = True,
-            with_vectors = True
+            with_vectors = True,
+            score_threshold = 0.8
         )
 
         return search_result

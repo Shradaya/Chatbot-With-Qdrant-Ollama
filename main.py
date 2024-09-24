@@ -20,8 +20,13 @@ def main():
     def get_bot_response(message, history):
         retrieved_documents = conn.search_in_qdrant(message)
         context = conn.rerank_documents(message, retrieved_documents)
-        prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context]), question = message)
-
+        if context:
+            prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context]), question = message)
+            # prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context.points]), question = message)
+            print(prompt)
+            print('-'*50)
+        else:
+            return "Relate documents not found"
         try:
             answer = llm.invoke(prompt)
             return answer
@@ -51,7 +56,7 @@ def main():
         for file in files_list:
             file_path = f"{file_paths.new}{file}"
             file_contents += get_text_from_document(file_path, chunk_size = 2048, chunk_overlap = 128)
-            os.replace(file_path, f"{file_paths.archive}{file}")
+            # os.replace(file_path, f"{file_paths.archive}{file}")
         if file_contents:
             conn.insert_data_to_qdrant(file_contents)
     else:

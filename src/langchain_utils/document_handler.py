@@ -16,11 +16,24 @@ def extract_text_from_text_file(text_file):
     return text
 
 def clean_text(text):
-    text = re.sub(r'\s+', ' ', text)
-    text = re.sub(r'[^\w\s,.]', '', text)
-    return text.strip()
+    text = re.sub(r'\d+\.\s*', ' ', text)  
+    text = re.sub(r'[^\w\s,:]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip() 
+    text = re.sub(r'Part\d+\s*', '', text) 
+    
+    return text
 
 def chunk_text(text, chunk_size, overlap):
+    def divide_by_article(text):
+        def remove_index(text):
+            return re.sub(r'\b\d+\.\s*\n?|\s*\n', '', text)
+        text = re.sub(r' \n \n\d+ \n \n', ' ', text)
+        split_text = re.split(r' \n \n\d+. \n', text)
+
+        # Remove any empty strings from the result
+        split_text = [remove_index(text) for text in split_text if text and text != " \n"]
+        return split_text
+    
     chunks = []
     
     # # Identify the Part to be used as Metadata
@@ -39,10 +52,20 @@ def chunk_text(text, chunk_size, overlap):
     for i in range(number_of_parts):
         chunks = []
         title = clean_text(text[indexes_in_part[i][0]:indexes_in_part[i][1]])
-
-        for i in range(indexes_in_part[i][1], indexes_in_part[i+1][0] if number_of_parts -1 != i else len(text), chunk_size - overlap):
-            chunk = clean_text(text[i:i + chunk_size])
-            chunks.append(chunk)
+        if title == "Fundamental Rights and Duties":
+            pass
+        if i == number_of_parts - 1:
+            start = indexes_in_part[i][1]
+            splitted_texts = divide_by_article(text[start:])
+        else:
+            start = indexes_in_part[i][1]
+            end = indexes_in_part[i+1][0]    
+            splitted_texts = divide_by_article(text[start:end])
+        for splitted_text in splitted_texts:
+            cleaned = clean_text(splitted_text)
+            if not cleaned:
+                continue
+            chunks.append(cleaned)
         parts.append({
             "title": title,
             "chunks": chunks
