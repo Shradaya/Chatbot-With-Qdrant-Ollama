@@ -21,12 +21,14 @@ def main():
         retrieved_documents = conn.search_in_qdrant(message)
         context = conn.rerank_documents(message, retrieved_documents)
         if context:
+            print([load.payload['metadata']['sub_title'] for load in context])
             prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context]), question = message)
+            
             # prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context.points]), question = message)
             print(prompt)
             print('-'*50)
         else:
-            return "Relate documents not found"
+            return "Related documents not found"
         try:
             answer = llm.invoke(prompt)
             return answer
@@ -66,9 +68,10 @@ def main():
         launch_gradio_ui(respond)
     else:
         output_file = f"{file_paths.output_file_path}{file_paths.output_file_name}"
-        with open(output_file, 'w') as file:
-            file.write("Question, Database Retrieval Delta, Invoke Model Delta, Answer, Generated Answer\n")
-        for i in tqdm(QUESTIONS):
+        # with open(output_file, 'w') as file:
+        #     file.write("Question, Database Retrieval Delta, Invoke Model Delta, Retrieved Context, Answer, Generated Answer\n")
+        print("Question, Database Retrieval Delta, Invoke Model Delta, Retrieved Context, Answer, Generated Answer\n")
+        for i in QUESTIONS: # tqdm(QUESTIONS):
             question = i["question"]
             answer = i["answer"]
             # # SEARCH IN DATABASE
@@ -87,11 +90,13 @@ def main():
             with open(output_file, 'a') as file:
                 database_retrieval_delta = get_total_difference_seconds(retrieve_start, retrieve_complete)
                 invoke_model_delta = get_total_difference_seconds(invoke_start, invoke_complete)
+                retrieved_context = "-----".join([x.payload[ollama_configs.answer_key] for x in context])
                 generated_answer = generated_answer.replace("\n", ":").replace(",", ";")
                 question = question.replace("\n", ":").replace(",", ";")
                 answer = answer.replace("\n", ":").replace(",", ";")
                 
-                file.write(f"{multi_replace(question)}, {database_retrieval_delta}, {invoke_model_delta}, {multi_replace(answer)}, {multi_replace(generated_answer)}\n")
+                print(f"{multi_replace(question)}, {database_retrieval_delta}, {invoke_model_delta}, {multi_replace(retrieved_context)}, {multi_replace(answer)}, {multi_replace(generated_answer)}\n")
+                # file.write(f"{multi_replace(question)}, {database_retrieval_delta}, {invoke_model_delta}, {multi_replace(retrieved_context)}, {multi_replace(answer)}, {multi_replace(generated_answer)}\n")
     
 if __name__ == "__main__":
     main()

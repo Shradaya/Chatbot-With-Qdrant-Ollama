@@ -1,5 +1,6 @@
 import re
 import fitz 
+from ..utils import remove_stop_words
 
 def extract_text_from_pdf(pdf_file):
     doc = fitz.open(pdf_file)
@@ -33,11 +34,11 @@ def chunk_text(text, chunk_size, overlap):
         # Remove any empty strings from the result
         split_text = [remove_index(text) for text in split_text if text and text != " \n"]
         return split_text
-    
+
     chunks = []
     
     # # Identify the Part to be used as Metadata
-    pattern = r'Part-\d+ \n[^\n]+ \n'
+    pattern = r'Part-\d+ \n[^\n]+ \n| \n \n\d+ \n \nSchedule-\d+ \n'
     matches = re.finditer(pattern, text)    
     indexes_in_part = []
     parts = []
@@ -46,14 +47,12 @@ def chunk_text(text, chunk_size, overlap):
         start_index = match.start()
         end_index = match.end()
         indexes_in_part.append((start_index, end_index))
-        
     # # CREATE_CHUNKS
     number_of_parts = len(indexes_in_part)
     for i in range(number_of_parts):
         chunks = []
+        sub_titles = []
         title = clean_text(text[indexes_in_part[i][0]:indexes_in_part[i][1]])
-        if title == "Fundamental Rights and Duties":
-            pass
         if i == number_of_parts - 1:
             start = indexes_in_part[i][1]
             splitted_texts = divide_by_article(text[start:])
@@ -63,12 +62,16 @@ def chunk_text(text, chunk_size, overlap):
             splitted_texts = divide_by_article(text[start:end])
         for splitted_text in splitted_texts:
             cleaned = clean_text(splitted_text)
+            cleaned_split = cleaned.split(":")
+            sub_title_list = remove_stop_words(f"{cleaned_split[0]} {title}") if len(cleaned_split) > 1 and len(cleaned_split[0]) < 80 else []
             if not cleaned:
                 continue
+            sub_titles.append(sub_title_list)
             chunks.append(cleaned)
         parts.append({
             "title": title,
-            "chunks": chunks
+            "chunks": chunks,
+            "sub_titles": sub_titles
         })
         
     return parts

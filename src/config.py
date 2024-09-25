@@ -4,14 +4,14 @@ class app:
 class ollama_configs:
     re_ranker = ""
     # # Gemma2, 2B
-    # model_name = "gemma2:2b"
-    # vector_size = "2304"
-    # answer_key = "text"
+    model_name = "gemma2:2b"
+    vector_size = "2304"
+    answer_key = "text"
     
     # # # PHI 3, 3.8B
-    model_name = "phi3:3.8B" # 3.8 B
-    vector_size = "3072"
-    answer_key = "text"
+    # model_name = "phi3:3.8B" # 3.8 B
+    # vector_size = "3072"
+    # answer_key = "text"
     
     # # # llama 3.1, 8B
     # model_name = "llama3.1"
@@ -29,8 +29,8 @@ class qdrant_configs:
     PORT = "6333"
     URI = f"http://{HOST}:{PORT}/"
     # COLLECTION = f"constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}"
-    COLLECTION = f"constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}-DIVIDE-TEST"
-    K = 2
+    COLLECTION = f"DIVIDE-constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}"
+    K = 10
     VECTOR_SIZE = ollama_configs.vector_size
     DISTANCE = "Cosine"
     

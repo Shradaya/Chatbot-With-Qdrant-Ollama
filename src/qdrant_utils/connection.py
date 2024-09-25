@@ -6,6 +6,7 @@ from qdrant_client.http.models import PointStruct
 # from langchain_qdrant import Qdrant as LangChainQdrant
 from sklearn.metrics.pairwise import cosine_similarity
 from qdrant_client.http import models
+from ..utils import remove_stop_words
 
 class qdrant_connection:
     def __init__(self, embedder, reranker = None):
@@ -44,22 +45,31 @@ class qdrant_connection:
 
     
     def insert_data_to_qdrant(self, data_items: list[dict]):
+        # COUNT NUMBER OF DATA POINTS
+        # valu = 0
+        # for val in data_items:
+        #     valu += len(val['chunks'])
+        # print(valu)
         data_items = tqdm(data_items, desc = "Loading Embedding")
         for data_item in data_items:
             points = []
             title = data_item.get('title')
+            sub_titles = data_item.get('sub_titles', [])
             data_list = data_item['chunks']
             
             embeddings = self.embedder._embed(data_list)
             
-            for i, (data, embedding) in enumerate(zip(data_list, embeddings)):
+            for i, (sub_title, data, embedding) in enumerate(zip(sub_titles, data_list, embeddings)):
                 if not all(isinstance(value, float) for value in embedding):
                     raise ValueError(f"Invalid embedding: {embedding}")
                 points.append(PointStruct(id=i, 
                                           vector=embedding, 
                                           payload = {
                                               'text': data, 
-                                              "metadata": title,
+                                              "metadata": {
+                                                  "title": title,
+                                                  "sub_title": sub_title
+                                              },
                                               "vectors": embedding
                                             }))
         
@@ -79,29 +89,21 @@ class qdrant_connection:
     
     def search_in_qdrant(self, query, top_k = qdrant_configs.K):
         query_embedding = self.embedder._embed([query])[0]
-        # filter_condition = models.Filter(
-        #     must=[
-        #         models.FieldCondition(
-        #             key='your_metadata_key',
-        #             match=models.Match(value='desired_value')
-        #         )
-        #     ]
-        # )
-        # search_result = self.client.query_points(
-        #     collection_name=qdrant_configs.COLLECTION,
-        #     query = query_embedding,
-        #     limit = top_k,
-        #     with_payload = True,
-        #     with_vectors = True
-        # )
+        filter_words = remove_stop_words(query)
+        
+        conditions = [models.FieldCondition(key='metadata.sub_title', 
+                                            match = models.MatchValue(value=word)) 
+                      for word in filter_words]
+        or_filter = models.Filter(should=conditions)
+
         search_result = self.client.search(
             collection_name = qdrant_configs.COLLECTION,
             query_vector = query_embedding,
-            # filter = filter_condition,
             limit = top_k,
+            query_filter = or_filter,
             with_payload = True,
             with_vectors = True,
-            score_threshold = 0.8
+            # score_threshold = 0.7
         )
 
         return search_result
