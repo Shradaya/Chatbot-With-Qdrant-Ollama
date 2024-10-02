@@ -27,9 +27,10 @@ def clean_text(text):
 def chunk_text(text, chunk_size, overlap):
     def divide_by_article(text):
         def remove_index(text):
-            return re.sub(r'\b\d+\.\s*\n?|\s*\n', '', text)
+            text = re.sub(r'\b\d+\.\s*\n?|\s*\n', '', text)
+            return text.strip()
         text = re.sub(r' \n \n\d+ \n \n', ' ', text)
-        split_text = re.split(r' \n \n\d+. \n', text)
+        split_text = re.split(r' \n \n\d+. \n| \n \n\d+. | \d+.', text)
 
         # Remove any empty strings from the result
         split_text = [remove_index(text) for text in split_text if text and text != " \n"]

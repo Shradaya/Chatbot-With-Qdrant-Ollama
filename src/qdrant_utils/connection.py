@@ -1,12 +1,11 @@
 import numpy as np
 from tqdm import tqdm
 from ..config import qdrant_configs
-from qdrant_client import QdrantClient
-from qdrant_client.http.models import PointStruct
-# from langchain_qdrant import Qdrant as LangChainQdrant
-from sklearn.metrics.pairwise import cosine_similarity
 from qdrant_client.http import models
 from ..utils import remove_stop_words
+from qdrant_client import QdrantClient
+from qdrant_client.http.models import PointStruct
+from sklearn.metrics.pairwise import cosine_similarity
 
 class qdrant_connection:
     def __init__(self, embedder, reranker = None):
@@ -35,22 +34,10 @@ class qdrant_connection:
         else:
             # Collection already exists
             print(f"Collection '{collection_name}' already exists.")
-
-    # def initialize_vector_store(self):
-    #     self.vector_store = LangChainQdrant(
-    #         client = self.client,
-    #         collection_name = qdrant_configs.COLLECTION,
-    #         embeddings = self.embedder
-    #     )
-
     
     def insert_data_to_qdrant(self, data_items: list[dict]):
-        # COUNT NUMBER OF DATA POINTS
-        # valu = 0
-        # for val in data_items:
-        #     valu += len(val['chunks'])
-        # print(valu)
         data_items = tqdm(data_items, desc = "Loading Embedding")
+        index = 1
         for data_item in data_items:
             points = []
             title = data_item.get('title')
@@ -59,10 +46,11 @@ class qdrant_connection:
             
             embeddings = self.embedder._embed(data_list)
             
-            for i, (sub_title, data, embedding) in enumerate(zip(sub_titles, data_list, embeddings)):
+            for sub_title, data, embedding in zip(sub_titles, data_list, embeddings):
                 if not all(isinstance(value, float) for value in embedding):
                     raise ValueError(f"Invalid embedding: {embedding}")
-                points.append(PointStruct(id=i, 
+                index += 1
+                points.append(PointStruct(id=index, 
                                           vector=embedding, 
                                           payload = {
                                               'text': data, 
@@ -89,6 +77,7 @@ class qdrant_connection:
     
     def search_in_qdrant(self, query, top_k = qdrant_configs.K):
         query_embedding = self.embedder._embed([query])[0]
+        query = query.lower().replace('.', ' ').replace('?', '').replace(',', '').replace(';', '')
         filter_words = remove_stop_words(query)
         
         conditions = [models.FieldCondition(key='metadata.sub_title', 
@@ -103,7 +92,17 @@ class qdrant_connection:
             query_filter = or_filter,
             with_payload = True,
             with_vectors = True,
-            # score_threshold = 0.7
+            score_threshold = 0.4
         )
+        
+        if not search_result:
+            self.client.search(
+                collection_name = qdrant_configs.COLLECTION,
+                query_vector = query_embedding,
+                limit = top_k,
+                with_payload = True,
+                with_vectors = True,
+                score_threshold = 0.6
+            )
 
         return search_result

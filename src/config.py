@@ -22,15 +22,15 @@ class file_paths:
     new = "./pdfs/"
     archive = "./archived_pdfs/"
     output_file_path = "./answers_collection/"
-    output_file_name = f"{ollama_configs.model_name.replace('.', '-').replace(':', '-')}-HM.csv"
+    output_file_name = f"{ollama_configs.model_name.replace('.', '-').replace(':', '-')}-TEMP.csv"
 
 class qdrant_configs:
     HOST = "localhost"
     PORT = "6333"
     URI = f"http://{HOST}:{PORT}/"
     # COLLECTION = f"constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}"
-    COLLECTION = f"DIVIDE-constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}"
-    K = 10
+    COLLECTION = f"DIVIDE-constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}-TEMP"
+    K = 3
     VECTOR_SIZE = ollama_configs.vector_size
     DISTANCE = "Cosine"
     
@@ -50,4 +50,7 @@ class reranker_configs:
 
 # Remember to always base your answers on the {context} provided and address the specific {question} asked. Keep your answers short.
 # """
-CUSTOM_PROMPT = "Using this data: {context}. Respond to this prompt: {question}. Do not make up answers. Answer to only what is asked."
+CUSTOM_PROMPT = """
+Using this data: {context}. Respond to this prompt: {question}. Do not make up answers. Answer to only what is asked.
+Do not start with According to document provided. Just answer what you know. If context doesn't have answer say No.
+"""
