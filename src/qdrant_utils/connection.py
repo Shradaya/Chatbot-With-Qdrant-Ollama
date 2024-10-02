@@ -63,19 +63,22 @@ class qdrant_connection:
         
             self.client.upsert(collection_name=qdrant_configs.COLLECTION, points=points)
     
-    def rerank_documents(self, question, retrieved_docs, top_n=5):
+    def rerank_documents(self, question, retrieved_docs: list, top_k: int = qdrant_configs.K):
         if not self.reranker:
             return retrieved_docs
 
-        question_embedding = self.reranker._embed([question])[0]
-        doc_embeddings = [doc.vector for doc in retrieved_docs]
-        similarities = cosine_similarity([question_embedding], doc_embeddings)[0]
+        reranked_score = self.reranker.compute_score([[question, answer] for answer in retrieved_docs])
         
-        ranked_indices = np.argsort(similarities)[::-1]
-        ranked_docs = [retrieved_docs[i] for i in ranked_indices[:top_n]]
-        return ranked_docs
+        zipped = list(zip(reranked_score, retrieved_docs))
+        sorted_zipped = sorted(zipped, key=lambda x: x[0], reverse=True)
+        _, reranked_docs = zip(*sorted_zipped)
+
+        if len(reranked_docs) > top_k:
+            reranked_docs = reranked_docs[:top_k]
+
+        return list(reranked_docs)
     
-    def search_in_qdrant(self, query, top_k = qdrant_configs.K):
+    def search_in_qdrant(self, query, retrive_count = qdrant_configs.RETRIEVE_COUNT):
         query_embedding = self.embedder._embed([query])[0]
         query = query.lower().replace('.', ' ').replace('?', '').replace(',', '').replace(';', '')
         filter_words = remove_stop_words(query)
@@ -88,17 +91,16 @@ class qdrant_connection:
         search_result = self.client.search(
             collection_name = qdrant_configs.COLLECTION,
             query_vector = query_embedding,
-            limit = top_k,
             query_filter = or_filter,
+            limit = retrive_count,
             with_payload = True,
-            with_vectors = True,
             score_threshold = 0.6
         )
         if not search_result:
             search_result = self.client.search(
                 collection_name = qdrant_configs.COLLECTION,
                 query_vector = query_embedding,
-                limit = top_k,
+                limit = retrive_count,
                 with_payload = True,
                 with_vectors = True,
                 score_threshold = 0.6

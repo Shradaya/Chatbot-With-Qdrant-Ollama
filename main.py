@@ -5,9 +5,10 @@ from datetime import datetime
 from src.config import file_paths
 from src.questions import QUESTIONS
 from src.ui import launch_gradio_ui
+from src.llm.reranker import reranker
 from src.llm.ollamaModels import check
 from src.config import CUSTOM_PROMPT, ollama_configs, qdrant_configs
-from src.llm.ollamaModels import llm, embedder, reranker
+from src.llm.ollamaModels import llm, embedder
 from src.qdrant_utils.connection import qdrant_connection
 from src.langchain_utils.document_handler import get_text_from_document
 
@@ -16,6 +17,24 @@ def get_total_difference_seconds(start: datetime, end: datetime) -> int:
 
 def multi_replace(value: str) -> str:
     return value.replace("\n", ":").replace(",", ";").replace('\u2705', "")
+
+def perform_context_retrieval(conn: qdrant_connection, question: str, use_rerank: bool = True, return_retrieve_interval: bool = False):
+    retrieve_start = datetime.now()
+    retrieved_documents = conn.search_in_qdrant(question)
+    contexts = [multi_replace(x.payload[ollama_configs.answer_key]) for x in retrieved_documents]
+    retrieve_complete = datetime.now()
+    
+    
+    contexts = conn.rerank_documents(question, contexts) if use_rerank else contexts
+    rerank_complete = datetime.now()
+    
+    if return_retrieve_interval:
+        database_retrieval_delta = get_total_difference_seconds(retrieve_start, retrieve_complete)
+        rerank_delta = get_total_difference_seconds(retrieve_complete, rerank_complete)
+        return contexts, database_retrieval_delta, rerank_delta
+    else:
+        return contexts
+    
 
 def main():
     def get_bot_response(message, history):
@@ -76,23 +95,20 @@ def main():
         output_file = f"{file_paths.output_file_path}{file_paths.output_file_name}"
         with open(output_file, 'w') as file:
             titles = [f"Retrieved Document {i + 1}" for i in range(qdrant_configs.K)]
-            file.write(f"Question, Database Retrieval Delta, Invoke Model Delta, {', '.join(titles)}, Answer, Generated Answer, Check Answer\n")
+            file.write(f"Question, Database Retrieval Delta, Invoke Model Delta, Rerank Delta, {', '.join(titles)}, Answer, Generated Answer, Check Answer\n")
         # print("Question, Database Retrieval Delta, Invoke Model Delta, Retrieved Context, Answer, Generated Answer\n")
         for i in tqdm(QUESTIONS):
         # for i in QUESTIONS: # tqdm(QUESTIONS):
             answer_check = "No"
             question = i["question"]
             answer = i["answer"]
-            # # SEARCH IN DATABASE
-            retrieve_start = datetime.now()
-            retrieved_documents = conn.search_in_qdrant(question)
-            context = conn.rerank_documents(question, retrieved_documents)
-            contexts = [multi_replace(x.payload[ollama_configs.answer_key]) for x in context]
-                
-            retrieve_complete = datetime.now()
-            if not context:
+
+            # # SEARCH IN DATABASE      
+            contexts, database_retrieval_delta, rerank_delta = perform_context_retrieval(conn, question, return_retrieve_interval=True)
+
+            if not contexts:
                 with open(output_file, 'a') as file:
-                    file.write(f"{multi_replace(question)}, , , , {multi_replace(answer)}, 'Related documents not found'\n")
+                    file.write(f"{multi_replace(question)}, , , , , {multi_replace(answer)}, 'Related documents not found'\n")
                 continue
             context_str = "\n".join(contexts)
             prompt = CUSTOM_PROMPT.format(context = context_str, question = question)
@@ -101,21 +117,21 @@ def main():
             invoke_start = datetime.now()
             generated_answer = llm.invoke(prompt)
             invoke_complete = datetime.now()
+            invoke_model_delta = get_total_difference_seconds(invoke_start, invoke_complete)
 
+            # # CHECK ANSWER AVAILABILITY IN CONTEXT
             answer_check = check(context_str, generated_answer)
             
             # WRITE TO FILE
             with open(output_file, 'a') as file:
                 contexts = adjust_list_length(contexts)
-                    
-                database_retrieval_delta = get_total_difference_seconds(retrieve_start, retrieve_complete)
-                invoke_model_delta = get_total_difference_seconds(invoke_start, invoke_complete)
+
                 generated_answer = generated_answer.replace("\n", ":").replace(",", ";")
                 question = question.replace("\n", ":").replace(",", ";")
                 answer = answer.replace("\n", ":").replace(",", ";")
                 
                 # print(f"{multi_replace(question)}, {database_retrieval_delta}, {invoke_model_delta}, {multi_replace(retrieved_context)}, {multi_replace(answer)}, {multi_replace(generated_answer)}\n")
-                file.write(f"{multi_replace(question)}, {database_retrieval_delta}, {invoke_model_delta}, {', '.join(contexts)}, {multi_replace(answer)}, ANSWER: {multi_replace(generated_answer)}, {answer_check}\n")
+                file.write(f"{multi_replace(question)}, {database_retrieval_delta}, {invoke_model_delta}, {rerank_delta}, {', '.join(contexts)}, {multi_replace(answer)}, ANSWER: {multi_replace(generated_answer)}, {answer_check}\n")
     
 if __name__ == "__main__":
     main()

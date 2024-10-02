@@ -3,16 +3,16 @@ class app:
 
 class ollama_configs:
     test = True
-    re_ranker = ""
+    re_ranker = "Available"
     # # Gemma2, 2B
-    model_name = "gemma2:2b"
-    vector_size = "2304"
-    answer_key = "text"
+    # model_name = "gemma2:2b"
+    # vector_size = "2304"
+    # answer_key = "text"
     
     # # # PHI 3, 3.8B
-    # model_name = "phi3:3.8B" # 3.8 B
-    # vector_size = "3072"
-    # answer_key = "text"
+    model_name = "phi3:3.8B" # 3.8 B
+    vector_size = "3072"
+    answer_key = "text"
     
     # # # llama 3.1, 8B
     # model_name = "llama3.1"
@@ -23,14 +23,15 @@ class file_paths:
     new = "./pdfs/"
     archive = "./archived_pdfs/"
     output_file_path = "./answers_collection/"
-    output_file_name = f"{ollama_configs.model_name.replace('.', '-').replace(':', '-')}{'-TEST' if ollama_configs.test else ''}.csv"
+    output_file_name = f"aaDIVIDE-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}{'-TEST' if ollama_configs.test else ''}.csv"
 
 class qdrant_configs:
+    K = 3
+    RETRIEVE_COUNT = 15
     HOST = "localhost"
     PORT = "6333"
     URI = f"http://{HOST}:{PORT}/"
     COLLECTION = f"constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}{'-TEST' if ollama_configs.test else ''}"
-    K = 3
     VECTOR_SIZE = ollama_configs.vector_size
     DISTANCE = "Cosine"
     
