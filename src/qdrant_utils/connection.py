@@ -92,11 +92,10 @@ class qdrant_connection:
             query_filter = or_filter,
             with_payload = True,
             with_vectors = True,
-            score_threshold = 0.4
+            score_threshold = 0.6
         )
-        
         if not search_result:
-            self.client.search(
+            search_result = self.client.search(
                 collection_name = qdrant_configs.COLLECTION,
                 query_vector = query_embedding,
                 limit = top_k,
