@@ -2,6 +2,7 @@ class app:
     title = "Nepal's Constitution"
 
 class ollama_configs:
+    test = True
     re_ranker = ""
     # # Gemma2, 2B
     model_name = "gemma2:2b"
@@ -22,14 +23,13 @@ class file_paths:
     new = "./pdfs/"
     archive = "./archived_pdfs/"
     output_file_path = "./answers_collection/"
-    output_file_name = f"{ollama_configs.model_name.replace('.', '-').replace(':', '-')}-TEMP.csv"
+    output_file_name = f"{ollama_configs.model_name.replace('.', '-').replace(':', '-')}{'-TEST' if ollama_configs.test else ''}.csv"
 
 class qdrant_configs:
     HOST = "localhost"
     PORT = "6333"
     URI = f"http://{HOST}:{PORT}/"
-    # COLLECTION = f"constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}"
-    COLLECTION = f"DIVIDE-constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}-TEMP"
+    COLLECTION = f"constitution-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}{'-TEST' if ollama_configs.test else ''}"
     K = 3
     VECTOR_SIZE = ollama_configs.vector_size
     DISTANCE = "Cosine"
