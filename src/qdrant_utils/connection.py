@@ -64,7 +64,7 @@ class qdrant_connection:
             self.client.upsert(collection_name=qdrant_configs.COLLECTION, points=points)
     
     def rerank_documents(self, question, retrieved_docs: list, top_k: int = qdrant_configs.K):
-        if not self.reranker:
+        if not self.reranker or not retrieved_docs:
             return retrieved_docs
 
         reranked_score = self.reranker.compute_score([[question, answer] for answer in retrieved_docs])
@@ -94,7 +94,7 @@ class qdrant_connection:
             query_filter = or_filter,
             limit = retrive_count,
             with_payload = True,
-            score_threshold = 0.6
+            score_threshold = 0.4
         )
         if not search_result:
             search_result = self.client.search(
@@ -103,7 +103,7 @@ class qdrant_connection:
                 limit = retrive_count,
                 with_payload = True,
                 with_vectors = True,
-                score_threshold = 0.6
+                score_threshold = 0.4
             )
 
         return search_result

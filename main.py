@@ -38,15 +38,12 @@ def perform_context_retrieval(conn: qdrant_connection, question: str, use_rerank
 
 def main():
     def get_bot_response(message, history):
-        retrieved_documents = conn.search_in_qdrant(message)
-        context = conn.rerank_documents(message, retrieved_documents)
-        if context:
-            print([load.payload['metadata']['sub_title'] for load in context])
-            prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context]), question = message)
-            
-            # prompt = CUSTOM_PROMPT.format(context = "\n".join([x.payload[ollama_configs.answer_key] for x in context.points]), question = message)
-            print(prompt)
-            print('-'*50)
+        contexts = perform_context_retrieval(conn, message)
+        print(message)
+        print(contexts)
+        print("-"*40)
+        if contexts:
+            prompt = CUSTOM_PROMPT.format(context = "\n".join(contexts), question = message)
         else:
             return "Related documents not found"
         try:
