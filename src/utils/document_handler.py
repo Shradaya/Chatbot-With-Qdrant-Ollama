@@ -1,6 +1,6 @@
 import re
 import fitz 
-from ..utils import remove_stop_words
+from ..utils.utils import remove_stop_words
 
 def extract_text_from_pdf(pdf_file):
     doc = fitz.open(pdf_file)

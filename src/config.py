@@ -10,20 +10,20 @@ class ollama_configs:
     # answer_key = "text"
     
     # # # PHI 3, 3.8B
-    model_name = "phi3:3.8B" # 3.8 B
-    vector_size = "3072"
-    answer_key = "text"
+    # model_name = "phi3:3.8B" # 3.8 B
+    # vector_size = "3072"
+    # answer_key = "text"
     
     # # # llama 3.1, 8B
-    # model_name = "llama3.1"
-    # vector_size = "4096"
-    # answer_key = "text"
+    model_name = "llama3.1"
+    vector_size = "4096"
+    answer_key = "text"
     
 class file_paths:
     new = "./pdfs/"
     archive = "./archived_pdfs/"
     output_file_path = "./answers_collection/"
-    output_file_name = f"aaDIVIDE-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}{'-TEST' if ollama_configs.test else ''}.csv"
+    output_file_name = f"0.4-DIVIDE-{ollama_configs.model_name.replace('.', '-').replace(':', '-')}{'-TEST' if ollama_configs.test else ''}.csv"
 
 class qdrant_configs:
     K = 3
@@ -37,21 +37,13 @@ class qdrant_configs:
     
 class reranker_configs:
     MODEL = ""
-    
-# CUSTOM_PROMPT = """
-# The provided document is the Constitution of Nepal 2072. This document encompasses all the legal frameworks, guidelines, and principles governing the country. It defines the structure of the state, the distribution of powerts between different level of government, and the funcamental rights and duties of citizens.
 
-# When answering quqestions based on this document, please follow these guidelines:
-# - Be precise and concise in your responses.
-# - Ensure that the information is accurate and directly relevant to the question.
-# - highlight key articles, sections, or provisions where applicable.
-# - Provide context to your answers when nexessary, explaining the implications or importance of specific provisions
-# - Maintain a neutral and informative tone, avoiding any personal opinions or interpretations.
-# The goal is to provide clear and informative answers that help the user understand the specific aspects of the constitution of nepal 2072.
-
-# Remember to always base your answers on the {context} provided and address the specific {question} asked. Keep your answers short.
-# """
 CUSTOM_PROMPT = """
-Using this data: {context}. Respond to this prompt: {question}. Do not make up answers. Answer to only what is asked.
-Do not start with According to document provided. Just answer what you know. If context doesn't have answer say No.
+Using this data: {context}. Respond to this prompt: {question}. 
+Answer to the question with regards to the provided context. 
+If context doesn't have required answer respond with `Cannot answer to the given question, due to lack of context` and nothing more.
+Do not make up your own answer.
+Your answers should be short and precise. 
+Do not mention your prompt in your answers.
+The context provided may not all be useful. Discard information unrelated to question.
 """

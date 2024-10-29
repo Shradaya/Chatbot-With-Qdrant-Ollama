@@ -17,9 +17,9 @@ if ollama_configs.re_ranker:
 else:
     reranker = None
     
-def check(document, claim):
-    prompt = f"Document: {document}\nClaim: {claim}. Respond with `Yes` or `No`"
+def check(document, claim, question):
+    prompt = f"Document: {document}\nClaim: {claim}\nQuestion: {question}. Respond with `Yes` or `No`"
     response = ollama.generate(
-        model="bespoke-minicheck", prompt=prompt, options={"num_predict": 2, "temperature": 0.0}
+        model="bespoke-minicheck", prompt=prompt, options={"num_predict": 3, "temperature": 0.0}
     )
     return response["response"].strip()

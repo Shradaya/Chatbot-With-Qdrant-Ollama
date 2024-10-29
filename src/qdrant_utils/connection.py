@@ -2,7 +2,7 @@ import numpy as np
 from tqdm import tqdm
 from ..config import qdrant_configs
 from qdrant_client.http import models
-from ..utils import remove_stop_words
+from ..utils.utils import remove_stop_words
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import PointStruct
 from sklearn.metrics.pairwise import cosine_similarity
